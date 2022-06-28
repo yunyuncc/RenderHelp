@@ -34,7 +34,7 @@
 #include <ostream>
 #include <sstream>
 #include <iostream>
-
+#include <spdlog/spdlog.h>
 
 //---------------------------------------------------------------------
 // 数学库：矢量定义
@@ -919,7 +919,11 @@ public:
 				for (x = x1, y = y1; x <= x2; x++) {
 					SetPixel(x, y, color);
 					rem += dy;
-					if (rem >= dx) { rem -= dx; y += (y2 >= y1)? 1 : -1; SetPixel(x, y, color); }
+					if (rem >= dx) {
+						rem -= dx; 
+						y += (y2 >= y1)? 1 : -1; 
+						SetPixel(x, y, color); 
+					}
 				}
 				SetPixel(x2, y2, color);
 			}	else {
@@ -1250,6 +1254,7 @@ public:
 			vertex.context.varying_vec3f.clear();
 			vertex.context.varying_vec4f.clear();
 
+			// 定点着色器返回的坐标是 标准化设备坐标(Normalized Device Coordinates, NDC)
 			// 运行顶点着色程序，返回顶点坐标
 			vertex.pos = _vertex_shader(k, vertex.context);
 
