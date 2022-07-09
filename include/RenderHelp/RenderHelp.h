@@ -1238,7 +1238,12 @@ public:
 	}
 
 public:
-
+	inline void DrawBox(Vec2i p1, Vec2i p2){
+		DrawLine(p1.x, p1.y, p2.x, p1.y);
+		DrawLine(p2.x, p1.y, p2.x, p2.y);
+		DrawLine(p2.x, p2.y, p1.x, p2.y);
+		DrawLine(p1.x, p2.y, p1.x, p1.y);
+	}
 	// 绘制一个三角形，必须先设定好着色器函数
 	inline bool DrawPrimitive() {
 		if (_frame_buffer == NULL || _vertex_shader == NULL) 
@@ -1255,6 +1260,14 @@ public:
 			vertex.context.varying_vec4f.clear();
 
 			// 定点着色器返回的坐标是 标准化设备坐标(Normalized Device Coordinates, NDC)
+			/*
+				OpenGL希望在每次顶点着色器运行后，我们可见的所有顶点都为标准化设备坐标
+				(Normalized Device Coordinate, NDC)。也就是说，每个顶点的x，y，z坐标
+				都应该在-1.0到1.0之间，超出这个坐标范围的顶点都将不可见。
+				我们通常会自己设定一个坐标的范围，之后再在顶点着色器中将这些坐标变换为标准化设备坐标。
+				然后将这些标准化设备坐标传入光栅器(Rasterizer)，将它们变换为屏幕上的二维坐标或像素。
+			*/
+
 			// 运行顶点着色程序，返回顶点坐标
 			vertex.pos = _vertex_shader(k, vertex.context);
 
@@ -1275,13 +1288,17 @@ public:
 			vertex.pos *= vertex.rhw;
 
 			// 计算屏幕坐标
-			vertex.spf.x = (vertex.pos.x + 1.0f) * _fb_width * 0.5f;
-			vertex.spf.y = (1.0f - vertex.pos.y) * _fb_height * 0.5f;
+			//x: (-1, 1) ==> (0, 1)
+			//y: (-1, 1) ==> (1, 0)
+			vertex.spf.x = (vertex.pos.x + 1.0f) * 0.5f * _fb_width;
+			vertex.spf.y = (1.0f - vertex.pos.y) * 0.5f * _fb_height;
 
 			// 整数屏幕坐标：加 0.5 的偏移取屏幕像素方格中心对齐
 			vertex.spi.x = (int)(vertex.spf.x + 0.5f);
 			vertex.spi.y = (int)(vertex.spf.y + 0.5f);
 
+			SPDLOG_DEBUG("spf:{}", vector_repr(vertex.spf));
+			SPDLOG_DEBUG("spi:{}", vector_repr(vertex.spi));
 			// 更新外接矩形范围
 			if (k == 0) {
 				_min_x = _max_x = Between(0, _fb_width - 1, vertex.spi.x);
@@ -1293,7 +1310,10 @@ public:
 				_min_y = Between(0, _fb_height - 1, Min(_min_y, vertex.spi.y));
 				_max_y = Between(0, _fb_height - 1, Max(_max_y, vertex.spi.y));
 			}
+			SPDLOG_DEBUG("{}-{} {}-{}", _min_x, _max_x, _min_y, _max_y);
 		}
+
+		//DrawBox(Vec2i(_min_x, _min_y), Vec2i(_max_x, _max_y));
 
 		// 绘制线框
 		if (_render_frame) {
