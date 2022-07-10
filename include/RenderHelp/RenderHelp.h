@@ -676,7 +676,12 @@ inline std::ostream& operator << (std::ostream& os, const Matrix<ROW, COL, T>& m
 	}
 	return os;
 }
-
+template<size_t ROW, size_t COL, typename T>
+inline std::string to_string(const Matrix<ROW, COL, T>& m){
+	std::stringstream ss;
+	ss << m;
+	return ss.str();
+}
 
 //---------------------------------------------------------------------
 // 工具函数
@@ -1308,8 +1313,6 @@ public:
 			vertex.spi.x = (int)(vertex.spf.x + 0.5f);
 			vertex.spi.y = (int)(vertex.spf.y + 0.5f);
 
-			SPDLOG_DEBUG("spf:{}", vector_repr(vertex.spf));
-			SPDLOG_DEBUG("spi:{}", vector_repr(vertex.spi));
 			// 更新外接矩形范围
 			if (k == 0) {
 				_min_x = _max_x = Between(0, _fb_width - 1, vertex.spi.x);
@@ -1321,7 +1324,7 @@ public:
 				_min_y = Between(0, _fb_height - 1, Min(_min_y, vertex.spi.y));
 				_max_y = Between(0, _fb_height - 1, Max(_max_y, vertex.spi.y));
 			}
-			SPDLOG_DEBUG("{}-{} {}-{}", _min_x, _max_x, _min_y, _max_y);
+			//SPDLOG_DEBUG("{}-{} {}-{}", _min_x, _max_x, _min_y, _max_y);
 		}
 
 		//DrawBox(Vec2i(_min_x, _min_y), Vec2i(_max_x, _max_y));
@@ -1340,12 +1343,7 @@ public:
 		Vec4f v01 = _vertex[1].pos - _vertex[0].pos;
 		Vec4f v02 = _vertex[2].pos - _vertex[0].pos;
 		Vec4f normal = vector_cross(v01, v02);
-		//-0.5,-0.5,0, 1
-        //0 , 0.51, 0,1
-        //-0.5, -1.01, 0, 0
-		SPDLOG_DEBUG("v01:{}", vector_repr(v01));
-		SPDLOG_DEBUG("v02:{}", vector_repr(v02));
-		SPDLOG_DEBUG("normal:{}", vector_repr(normal));
+
 
 		// 使用 vtx 访问三个顶点，而不直接用 _vertex 访问，因为可能会调整顺序
 		Vertex *vtx[3] = { &_vertex[0], &_vertex[1], &_vertex[2] };
@@ -1360,11 +1358,6 @@ public:
 			return false;
 		}
 		//二维向量向乘的结果是一个标量，它的绝对值是两条边构成的平行四边形的面积，正负号表示方向是朝里还是朝外
-		Vec2f vv01 = vtx[1]->pos.xy() - vtx[0]->pos.xy();
-		Vec2f vv02 = vtx[2]->pos.xy() - vtx[0]->pos.xy();
-		float size012 = vector_cross(vv01, vv02);
-		SPDLOG_DEBUG("size012:{}", size012);
-
 		// 保存三个端点位置
 		Vec2i p0 = vtx[0]->spi;
 		Vec2i p1 = vtx[1]->spi;
@@ -1380,7 +1373,6 @@ public:
 		bool TopLeft12 = IsTopLeft(p1, p2);
 		bool TopLeft20 = IsTopLeft(p2, p0);
 		bool TopLeft02 = IsTopLeft(p0, p2);
-		SPDLOG_DEBUG("TopLeft01:{} TopLeft12:{} TopLeft20:{}", TopLeft01, TopLeft12, TopLeft20);
 
 		// 迭代三角形外接矩形的所有点
 		for (int cy = _min_y; cy <= _max_y; cy++) {

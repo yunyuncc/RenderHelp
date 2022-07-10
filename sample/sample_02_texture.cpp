@@ -1,8 +1,9 @@
 #include "RenderHelp.h"
-
+#include <spdlog/spdlog.h>
 
 int main(void)
 {
+	spdlog::set_level(spdlog::level::debug);
 	RenderHelp rh(800, 600);
 
 	// 定义一个纹理，并生成网格图案
@@ -13,9 +14,12 @@ int main(void)
 			texture.SetPixel(x, y, k? 0xffffffff : 0xff3fbcef);
 		}
 	}
+	texture.SaveFile("texture.bmp");
 
 	// 定义变换矩阵：模型变换，摄像机变换，透视变换
 	Mat4x4f mat_model = matrix_set_identity();	// 模型变换
+	SPDLOG_DEBUG("mat_model :\n{}\n", to_string(mat_model));
+
 	Mat4x4f mat_view = matrix_set_lookat({-0.7, 0, 1.5}, {0,0,0}, {0,0,1});	// 摄像机方位
 	Mat4x4f mat_proj = matrix_set_perspective(3.1415926f * 0.5f, 800 / 600.0, 1.0, 500.0f);
 	Mat4x4f mat_mvp = mat_model * mat_view * mat_proj;	// 综合变换矩阵

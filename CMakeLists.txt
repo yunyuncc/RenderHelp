@@ -8,6 +8,7 @@ add_definitions(-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 
 include_directories(3rd/spdlog-1.10.0/include)
 include_directories(include)
+include_directories(include/RenderHelp)
 
 
 
@@ -17,3 +18,6 @@ set(SRC
 
 add_executable(${PROJECT_NAME} ${SRC})
 target_compile_options(${PROJECT_NAME} PRIVATE "-O3")
+
+add_executable(sample_02_texture sample/sample_02_texture.cpp)
+target_compile_options(sample_02_texture PRIVATE "-O3")
