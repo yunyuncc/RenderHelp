@@ -1244,6 +1244,17 @@ public:
 		DrawLine(p2.x, p2.y, p1.x, p2.y);
 		DrawLine(p1.x, p2.y, p1.x, p1.y);
 	}
+	/*
+		两点式直线方程：	   (y-y1)/(y2-y1) == (x-x1)/(x2-x1)
+		左右两边同乘 (y2-y1): (y-y1) == (x-x1)*(y2-y1)/(x2-x1) 
+		左右两边同乘 (x2-x1): (y-y1)*(x2-x1) == (x-x1)*(y2-y1)	
+		移向：			     (y-y1)*(x2-x1) - (x-x1)*(y2-y1) == 0
+	*/
+	int EdgeEquation(int x1, int y1, int x2, int y2, int x, int y){
+		return (y-y1)*(x2-x1) - (x-x1)*(y2-y1);
+	}
+	
+
 	// 绘制一个三角形，必须先设定好着色器函数
 	inline bool DrawPrimitive() {
 		if (_frame_buffer == NULL || _vertex_shader == NULL) 
@@ -1329,9 +1340,16 @@ public:
 		Vec4f v01 = _vertex[1].pos - _vertex[0].pos;
 		Vec4f v02 = _vertex[2].pos - _vertex[0].pos;
 		Vec4f normal = vector_cross(v01, v02);
+		//-0.5,-0.5,0, 1
+        //0 , 0.51, 0,1
+        //-0.5, -1.01, 0, 0
+		SPDLOG_DEBUG("v01:{}", vector_repr(v01));
+		SPDLOG_DEBUG("v02:{}", vector_repr(v02));
+		SPDLOG_DEBUG("normal:{}", vector_repr(normal));
 
 		// 使用 vtx 访问三个顶点，而不直接用 _vertex 访问，因为可能会调整顺序
 		Vertex *vtx[3] = { &_vertex[0], &_vertex[1], &_vertex[2] };
+
 
 		// 如果背向视点，则交换顶点，保证 edge equation 判断的符号为正
 		if (normal.z > 0.0f) {
@@ -1341,6 +1359,11 @@ public:
 		else if (normal.z == 0.0f) {
 			return false;
 		}
+		//二维向量向乘的结果是一个标量，它的绝对值是两条边构成的平行四边形的面积，正负号表示方向是朝里还是朝外
+		Vec2f vv01 = vtx[1]->pos.xy() - vtx[0]->pos.xy();
+		Vec2f vv02 = vtx[2]->pos.xy() - vtx[0]->pos.xy();
+		float size012 = vector_cross(vv01, vv02);
+		SPDLOG_DEBUG("size012:{}", size012);
 
 		// 保存三个端点位置
 		Vec2i p0 = vtx[0]->spi;
@@ -1356,6 +1379,8 @@ public:
 		bool TopLeft01 = IsTopLeft(p0, p1);
 		bool TopLeft12 = IsTopLeft(p1, p2);
 		bool TopLeft20 = IsTopLeft(p2, p0);
+		bool TopLeft02 = IsTopLeft(p0, p2);
+		SPDLOG_DEBUG("TopLeft01:{} TopLeft12:{} TopLeft20:{}", TopLeft01, TopLeft12, TopLeft20);
 
 		// 迭代三角形外接矩形的所有点
 		for (int cy = _min_y; cy <= _max_y; cy++) {
@@ -1364,10 +1389,9 @@ public:
 
 				// Edge Equation
 				// 使用整数避免浮点误差，同时因为是左手系，所以符号取反
-				int E01 = -(cx - p0.x) * (p1.y - p0.y) + (cy - p0.y) * (p1.x - p0.x);
-				int E12 = -(cx - p1.x) * (p2.y - p1.y) + (cy - p1.y) * (p2.x - p1.x);
-				int E20 = -(cx - p2.x) * (p0.y - p2.y) + (cy - p2.y) * (p0.x - p2.x);
-
+				int E01 = EdgeEquation(p0.x, p0.y, p1.x, p1.y, cx, cy);
+				int E12 = EdgeEquation(p1.x, p1.y, p2.x, p2.y, cx, cy);
+				int E20 = EdgeEquation(p2.x, p2.y, p0.x, p0.y, cx, cy);
 
 				// 如果是左上边，用 E >= 0 判断合法，如果右下边就用 E > 0 判断合法
 				// 这里通过引入一个误差 1 ，来将 < 0 和 <= 0 用一个式子表达
@@ -1375,6 +1399,7 @@ public:
 				if (E12 < (TopLeft12? 0 : 1)) continue;   // 在第二条边后面
 				if (E20 < (TopLeft20? 0 : 1)) continue;   // 在第三条边后面
 
+				//经过上面的步骤就把三角形外面的像素给过滤掉了
 				// 三个端点到当前点的矢量
 				Vec2f s0 = vtx[0]->spf - px;
 				Vec2f s1 = vtx[1]->spf - px;
