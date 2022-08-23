@@ -1258,7 +1258,61 @@ public:
 	int EdgeEquation(int x1, int y1, int x2, int y2, int x, int y){
 		return (y-y1)*(x2-x1) - (x-x1)*(y2-y1);
 	}
-	
+	inline bool DrawLine(){
+		if (_frame_buffer == nullptr || _vertex_shader == nullptr) 
+			return false;
+		// 顶点初始化
+		for (int k = 0; k < 2; k++) {
+			Vertex& vertex = _vertex[k];
+
+			// 清空上下文 varying 列表
+			vertex.context.varying_float.clear();
+			vertex.context.varying_vec2f.clear();
+			vertex.context.varying_vec3f.clear();
+			vertex.context.varying_vec4f.clear();
+			// 运行顶点着色程序，返回顶点坐标
+			vertex.pos = _vertex_shader(k, vertex.context);
+
+			// 简单裁剪，任何一个顶点超过 CVV 就剔除
+			float w = vertex.pos.w;
+			
+			// 这里图简单，当一个点越界，立马放弃整个三角形，更精细的做法是
+			// 如果越界了就在齐次空间内进行裁剪，拆分为 0-2 个三角形然后继续
+			if (w == 0.0f) return false;
+			if (vertex.pos.z < 0.0f || vertex.pos.z > w) return false;
+			if (vertex.pos.x < -w || vertex.pos.x > w) return false;
+			if (vertex.pos.y < -w || vertex.pos.y > w) return false;
+
+			// 计算 w 的倒数：Reciprocal of the Homogeneous W 
+			vertex.rhw = 1.0f / w;
+
+			// 齐次坐标空间 /w 归一化到单位体积 cvv
+			vertex.pos *= vertex.rhw;
+
+			// 计算屏幕坐标
+			//x: (-1, 1) ==> (0, 1)
+			//y: (-1, 1) ==> (1, 0)
+			vertex.spf.x = (vertex.pos.x + 1.0f) * 0.5f * _fb_width;
+			vertex.spf.y = (1.0f - vertex.pos.y) * 0.5f * _fb_height;
+
+			// 整数屏幕坐标：加 0.5 的偏移取屏幕像素方格中心对齐
+			vertex.spi.x = (int)(vertex.spf.x + 0.5f);
+			vertex.spi.y = (int)(vertex.spf.y + 0.5f);
+			// 更新外接矩形范围
+			if (k == 0) {
+				_min_x = _max_x = Between(0, _fb_width - 1, vertex.spi.x);
+				_min_y = _max_y = Between(0, _fb_height - 1, vertex.spi.y);
+			}
+			else {
+				_min_x = Between(0, _fb_width - 1, Min(_min_x, vertex.spi.x));
+				_max_x = Between(0, _fb_width - 1, Max(_max_x, vertex.spi.x));
+				_min_y = Between(0, _fb_height - 1, Min(_min_y, vertex.spi.y));
+				_max_y = Between(0, _fb_height - 1, Max(_max_y, vertex.spi.y));
+			}
+		}
+		DrawLine(_vertex[0].spi.x, _vertex[0].spi.y, _vertex[1].spi.x, _vertex[1].spi.y);
+		return true;
+	}
 
 	// 绘制一个三角形，必须先设定好着色器函数
 	inline bool DrawPrimitive() {

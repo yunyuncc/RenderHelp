@@ -21,3 +21,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE "-O3")
 
 add_executable(sample_02_texture sample/sample_02_texture.cpp)
 target_compile_options(sample_02_texture PRIVATE "-O3")
+
+add_executable(sample_03_box sample/sample_03_box.cpp)
+target_compile_options(sample_03_box PRIVATE "-O3")
+
+add_executable(sample_04_gouraud sample/sample_04_gouraud.cpp)
+target_compile_options(sample_04_gouraud PRIVATE "-O3")
