@@ -4,6 +4,8 @@
 
 int main(void) 
 {
+	//1.搭建场景的时候通过场景编辑器来设置各个模型的位姿，缩放参数
+	//2.保存场景模型的时候怎么保存步骤1中设置的各个参数？
 	RenderHelp rh(600, 800);
 
 	// 加载模型
@@ -12,15 +14,16 @@ int main(void)
 	Vec3f eye_pos = {0, -0.5, 1.7};
 	Vec3f eye_at = {0, 0, 0};
 	Vec3f eye_up = {0, 1, 0};
-	Vec3f light_dir = {1, 1, 0.85};			// 光的方向
+	Vec3f light_dir = {1, 1, 0.0};			// 光的方向
 	float perspective = 3.1415926f * 0.5f;
 
-	Mat4x4f mat_model = matrix_set_scale(1, 1, 1);
+	Mat4x4f mat_model = matrix_set_scale(1.5, 1.5, 1.5);
 	Mat4x4f mat_view = matrix_set_lookat(eye_pos, eye_at, eye_up);
 	Mat4x4f mat_proj = matrix_set_perspective(perspective, 6 / 8.0, 1.0, 500.0f);
 	Mat4x4f mat_mvp = mat_model * mat_view * mat_proj;
 
 	// 用于将法向量从模型坐标系变换到世界坐标系
+	// 这种计算方法好像是为了使法线转换到世界坐标系后还保持和切面垂直
 	Mat4x4f mat_model_it = matrix_invert(mat_model).Transpose();
 
 	// 顶点属性
@@ -73,7 +76,7 @@ int main(void)
 		rh.DrawPrimitive();
 	}
 
-	rh.SaveFile("output.bmp");
+	rh.SaveFile("output_2.bmp");
 
 #if defined(WIN32) || defined(_WIN32)
 	system("mspaint output.bmp");

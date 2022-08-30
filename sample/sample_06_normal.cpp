@@ -33,7 +33,11 @@ int main(void)
 			output.varying_vec2f[VARYING_UV] = vs_input[index].uv;
 			return pos;
 		});
+	//逐像素计算法线
 
+	// 每个像素的法线是通过采样法线贴图 然后将其变换到世界坐标系下得到的
+	// 法线和平行光（归一化之后）点积得到平行光的光照强度
+	// 每个像素的光照强度乘以该点的 漫反射贴图采样的颜色
 	rh.SetPixelShader([&] (ShaderContext& input) -> Vec4f {
 			Vec2f uv = input.varying_vec2f[VARYING_UV];
 			// 归一化光的方向
@@ -59,7 +63,7 @@ int main(void)
 		rh.DrawPrimitive();
 	}
 
-	rh.SaveFile("output.bmp");
+	rh.SaveFile("output_with_0.1.bmp");
 
 #if defined(WIN32) || defined(_WIN32)
 	system("mspaint output.bmp");

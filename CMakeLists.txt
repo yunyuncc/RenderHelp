@@ -27,3 +27,14 @@ target_compile_options(sample_03_box PRIVATE "-O3")
 
 add_executable(sample_04_gouraud sample/sample_04_gouraud.cpp)
 target_compile_options(sample_04_gouraud PRIVATE "-O3")
+
+add_executable(sample_05_model sample/sample_05_model.cpp)
+target_compile_options(sample_05_model PRIVATE "-O3")
+
+
+add_executable(sample_06_normal sample/sample_06_normal.cpp)
+target_compile_options(sample_06_normal PRIVATE "-O3")
+
+
+add_executable(sample_07_specular sample/sample_07_specular.cpp)
+target_compile_options(sample_07_specular PRIVATE "-O3")

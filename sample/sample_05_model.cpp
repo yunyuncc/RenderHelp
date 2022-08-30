@@ -28,7 +28,7 @@ int main(void)
 
 	const int VARYING_UV = 0;
 	const int VARYING_NORMAL = 1;
-
+	//逐顶点计算法线
 	rh.SetVertexShader([&] (int index, ShaderContext& output) -> Vec4f {
 			Vec4f pos = vs_input[index].pos.xyz1() * mat_mvp;
 			Vec4f normal = (vs_input[index].normal.xyz1() * mat_model_it);
